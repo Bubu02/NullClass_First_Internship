@@ -22,4 +22,3 @@
 - Summary of findings and any potential improvements.
 
 ## Task 2: Model Development
-(Repeat the structure above for each task
