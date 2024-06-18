@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 60%;
+      /* decreased width to fit sections */
+      margin: 0 auto;
+      background-color: #ADD8E6;
+      /* light blue background */
+      border-radius: 20px;
+      /* curved corners */
+      padding: 20px;
+    }
+
+    .left-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 50px;
+    }
+
+    .right-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 50px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      border-radius: 20px;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px 0;
+      width: 150px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+      /* Adds a dark outline around the buttons */
+    }
+
+    .input-button {
+      background-color: aquamarine;
+    }
+
+    .detect-button {
+      background-color: aquamarine;
+    }
+
+    .exit-button {
+      background-color: lightcoral;
+    }
+
+    .output {
+      background-color: #FFFFFF;
+      border: 0.5px solid #0000FF;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 16px;
+      margin: 10px 0;
+      width: 200px;
+      text-align: center;
+    }
+
+    .image {
+      width: 200px;
+      height: 200px;
+      margin: 20px 0;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      /* align-items: center; */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="left-side">
+      <form action="/" method="post" enctype="multipart/form-data">
+        <div class="button-container">
+          <button class="button input-button" type="button"
+            onclick="document.getElementById('image-input').click()">INPUT</button>
+          <button class="button detect-button" type="submit">DETECT</button>
+          <button class="button exit-button" onclick="location.reload()">EXIT</button>
+        </div>
+        <input type="file" id="image-input" name="image" style="display: none;">
+      </form>
+    </div>
+    <div class="right-side">
+      <h2 class="title">INPUT IMAGE</h2>
+      <img id="image-preview" src="{{ url_for('static', filename=image_loc) }}" alt="Input Image" class="image">
+      <div class="output">{{ prediction }}</div>
+    </div>
+  </div>
+
+  <script>
+    const imageInput = document.getElementById('image-input');
+    const imagePreview = document.getElementById('image-preview');
+
+    imageInput.addEventListener('change', (e) => {
+      const file = imageInput.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        imagePreview.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+
+</html>
