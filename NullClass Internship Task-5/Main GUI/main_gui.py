@@ -1,13 +1,13 @@
-import cv2
-import numpy as np
-from tensorflow.keras.models import load_model
-from tkinter import filedialog
-from keras.losses import MeanAbsoluteError
-from PIL import Image, ImageTk
 import tkinter as tk
+from tkinter import filedialog
+from tensorflow.keras.models import load_model
+from PIL import Image, ImageTk
+import numpy as np
+import cv2
 import torch
+from keras.losses import MeanAbsoluteError
 
-# Loading the trained models
+# Load the trained models
 custom_objects = {
     'mae': MeanAbsoluteError()
 }
@@ -18,6 +18,10 @@ age_model = load_model('Machine Learning/Age Detector/Saved Models/Age_Detection
 # Load YOLOv5 model with custom weights
 yolo_model_path = 'Main GUI/yolov5s.pt'  # Update this path to your .pt file
 model = torch.hub.load('ultralytics/yolov5', 'custom', path=yolo_model_path, force_reload=True)
+
+# Load Haar Cascade for face detection
+haarcascade_path = 'Main GUI/haarcascade_frontalface_default.xml'  # Ensure this file is downloaded and available
+face_cascade = cv2.CascadeClassifier(haarcascade_path)
 
 def preprocess_image(image, target_size=(224, 224), grayscale=False):
     img = cv2.resize(image, target_size)
@@ -45,63 +49,78 @@ def predict_age(person_crop):
     return round(age_pred[0][0])
 
 def process_frame(frame):
-    people_detections = detect_people(frame)
-    sleeping_count = 0
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
     results = []
 
-    for detection in people_detections:
-        x1, y1, x2, y2, conf, cls = detection
-        x1, y1, x2, y2 = map(int, [x1, y1, x2, y2])
-        person_crop = frame[y1:y2, x1:x2]
+    for (x, y, w, h) in faces:
+        face_crop = frame[y:y+h, x:x+w]
 
-        if classify_sleep(person_crop):
-            sleeping_count += 1
-            age = predict_age(person_crop)
-            results.append({'bbox': [x1, y1, x2, y2], 'age': age, 'status': 'Sleeping'})
+        if classify_sleep(face_crop):
+            status = 'Sleeping'
         else:
-            results.append({'bbox': [x1, y1, x2, y2], 'age': predict_age(person_crop), 'status': 'Awake'})
+            status = 'Awake'
 
-    return sleeping_count, results
+        age = predict_age(face_crop)
+        results.append({'bbox': [x, y, x+w, y+h], 'age': age, 'status': status})
 
-def detect_age_and_sleep(file_path):
-    frame = cv2.imread(file_path)
-    sleeping_count, results = process_frame(frame)
+    return results
 
-    for result in results:
-        x1, y1, x2, y2 = result['bbox']
-        label = f"Age: {result['age']}, {result['status']}"
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
-        cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (36, 255, 12), 2)
-
-    cv2.imshow('Detection', frame)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-def upload_image():
+def detect_age_and_sleep():
     file_path = filedialog.askopenfilename()
-    uploaded_image = Image.open(file_path)
-    uploaded_image = uploaded_image.resize((250, 250), Image.LANCZOS)
-    imgtk = ImageTk.PhotoImage(image=uploaded_image)
-    label_img.config(image=imgtk)
-    label_img.image = imgtk
-    detect_age_and_sleep(file_path)
+    if not file_path:
+        return
+    frame = cv2.imread(file_path)
+    results = process_frame(frame)
+    display_results(frame, results)
+
+def display_results(frame, results):
+    message = ""
+    for idx, result in enumerate(results):
+        x1, y1, x2, y2 = result['bbox']
+        label = f"Person-{idx + 1}, Age: {result['age']}, {result['status']}"
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+        cv2.putText(frame, f"Person-{idx + 1}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 2)
+        cv2.putText(frame, f"Age: {result['age']}, {result['status']}", (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 2)
+        message += f"Person-{idx + 1}, Age: {result['age']}, Status: {result['status']}\n"
+
+    # Resize the frame to fit in the tkinter window
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    img_pil = Image.fromarray(frame_rgb).resize((400, 300))  # Resize to fit in the GUI
+    img_tk = ImageTk.PhotoImage(img_pil)
+
+    # Update the tkinter image label
+    label_img.config(image=img_tk)
+    label_img.image = img_tk
+
+    # Update the status message
+    label_status.config(text=message)
 
 # Creating the main window
 root = tk.Tk()
 root.geometry('800x600')
 root.title("Age and Sleep Detection in Cars")
+root.configure(bg="#b0e0e6")
 
-# Creating a button for uploading images
-button_upload = tk.Button(root, text="Upload Image", command=upload_image)
-button_upload.pack()
+# Creating a button for detecting age and sleep
+button_detect = tk.Button(root, text="DETECT", command=detect_age_and_sleep, bg="#90ee90", width=15, height=2)
+button_detect.place(x=50, y=200)
+
+# Creating an exit button
+button_exit = tk.Button(root, text="EXIT", command=root.quit, bg="#ff6961", width=15, height=2)
+button_exit.place(x=50, y=260)
 
 # Creating a label for displaying the uploaded image
-label_img = tk.Label(root)
-label_img.pack()
+label_img = tk.Label(root, bg="#b0e0e6")
+label_img.place(x=300, y=120)
 
-# Creating a label for displaying the predicted age and sleep status
-label_status = tk.Label(root, text="Predicted Age and Sleep Status: ")
-label_status.pack()
+# Creating a label for displaying the status
+label_status = tk.Label(root, text="None", font=("Arial", 12), bg="#b0e0e6")
+label_status.place(x=300, y=420)
+
+# Creating a title label
+label_title = tk.Label(root, text="INPUT IMAGE", font=("Arial", 20), bg="#b0e0e6")
+label_title.place(x=370, y=50)
 
 # Run the application
 root.mainloop()
