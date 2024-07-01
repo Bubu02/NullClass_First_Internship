@@ -55,13 +55,13 @@ def process_frame(frame):
 
     for (x, y, w, h) in faces:
         face_crop = frame[y:y+h, x:x+w]
+        status = 'Awake'
+        age = None
 
         if classify_sleep(face_crop):
             status = 'Sleeping'
-        else:
-            status = 'Awake'
+            age = predict_age(face_crop)
 
-        age = predict_age(face_crop)
         results.append({'bbox': [x, y, x+w, y+h], 'age': age, 'status': status})
 
     return results
@@ -78,11 +78,20 @@ def display_results(frame, results):
     message = ""
     for idx, result in enumerate(results):
         x1, y1, x2, y2 = result['bbox']
-        label = f"Person-{idx + 1}, Age: {result['age']}, {result['status']}"
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
-        cv2.putText(frame, f"Person-{idx + 1}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 2)
-        cv2.putText(frame, f"Age: {result['age']}, {result['status']}", (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 225), 2)
-        message += f"Person-{idx + 1}, Age: {result['age']}, Status: {result['status']}\n"
+        label = f"Person-{idx + 1}, {result['status']}"
+        if result['status'] == 'Sleeping':
+            color = (0, 0, 255)  # Red
+            label += f", Age: {result['age']}"
+        else:
+            color = (0, 255, 0)  # Green
+
+        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+        cv2.putText(frame, f"Person-{idx + 1}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+        cv2.putText(frame, f"{result['status']}", (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+        if result['age'] is not None:
+            cv2.putText(frame, f"Age: {result['age']}", (x1, y2 + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+
+        message += f"Person-{idx + 1}, Status: {result['status']}, Age: {result['age']}\n"
 
     # Resize the frame to fit in the tkinter window
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
