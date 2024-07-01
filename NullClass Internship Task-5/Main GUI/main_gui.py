@@ -73,6 +73,13 @@ def detect_age_and_sleep():
     frame = cv2.imread(file_path)
     results = process_frame(frame)
     display_results(frame, results)
+    display_original_image(file_path)
+
+def display_original_image(file_path):
+    img = Image.open(file_path).resize((300, 300))  # Adjusted to fit the frame
+    img_tk = ImageTk.PhotoImage(img)
+    label_original_img.config(image=img_tk)
+    label_original_img.image = img_tk
 
 def display_results(frame, results):
     message = ""
@@ -86,16 +93,16 @@ def display_results(frame, results):
             color = (0, 255, 0)  # Green
 
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-        cv2.putText(frame, f"Person-{idx + 1}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-        cv2.putText(frame, f"{result['status']}", (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+        cv2.putText(frame, f"Person-{idx + 1}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        cv2.putText(frame, f"{result['status']}", (x1, y2 + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         if result['age'] is not None:
-            cv2.putText(frame, f"Age: {result['age']}", (x1, y2 + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+            cv2.putText(frame, f"Age: {result['age']}", (x1, y2 + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
         message += f"Person-{idx + 1}, Status: {result['status']}, Age: {result['age']}\n"
 
     # Resize the frame to fit in the tkinter window
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img_pil = Image.fromarray(frame_rgb).resize((400, 300))  # Resize to fit in the GUI
+    img_pil = Image.fromarray(frame_rgb).resize((700, 500))  # Adjusted to fit in the GUI
     img_tk = ImageTk.PhotoImage(img_pil)
 
     # Update the tkinter image label
@@ -107,29 +114,45 @@ def display_results(frame, results):
 
 # Creating the main window
 root = tk.Tk()
-root.geometry('800x600')
 root.title("Age and Sleep Detection in Cars")
 root.configure(bg="#b0e0e6")
+root.state('zoomed')  # Make the window fullscreen
 
-# Creating a button for detecting age and sleep
-button_detect = tk.Button(root, text="DETECT", command=detect_age_and_sleep, bg="#90ee90", width=15, height=2)
-button_detect.place(x=50, y=200)
+# Left section frame
+frame_left = tk.Frame(root, width=300, bg="#b0e0e6")
+frame_left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
+
+# Frame for original image preview
+frame_original = tk.Frame(frame_left, width=300, height=300, bg="#d3d3d3")
+frame_original.pack(pady=10)
+
+# Creating a label for the original image preview
+label_original_img = tk.Label(frame_original, bg="#d3d3d3", text="PREVIEW IMAGE", font=("Arial", 16))
+label_original_img.pack(expand=True)
+
+# Frame for buttons and status
+frame_buttons = tk.Frame(frame_left, width=300, bg="white")
+frame_buttons.pack(pady=10, fill=tk.X)
+
+# Creating a button for uploading and detecting age and sleep
+button_upload = tk.Button(frame_buttons, text="DETECT", command=detect_age_and_sleep, bg="#90ee90", width=15, height=2)
+button_upload.grid(row=0, column=0, padx=5, pady=5)
 
 # Creating an exit button
-button_exit = tk.Button(root, text="EXIT", command=root.quit, bg="#ff6961", width=15, height=2)
-button_exit.place(x=50, y=260)
-
-# Creating a label for displaying the uploaded image
-label_img = tk.Label(root, bg="#b0e0e6")
-label_img.place(x=300, y=120)
+button_exit = tk.Button(frame_buttons, text="EXIT", command=root.quit, bg="#ff6961", width=15, height=2)
+button_exit.grid(row=0, column=1, padx=5, pady=5)
 
 # Creating a label for displaying the status
-label_status = tk.Label(root, text="None", font=("Arial", 12), bg="#b0e0e6")
-label_status.place(x=300, y=420)
+label_status = tk.Label(frame_buttons, text="", font=("Arial", 12), bg="white", anchor='nw', justify='left')
+label_status.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
-# Creating a title label
-label_title = tk.Label(root, text="INPUT IMAGE", font=("Arial", 20), bg="#b0e0e6")
-label_title.place(x=370, y=50)
+# Right section frame for detected image (covering the rest of the screen)
+frame_right = tk.Frame(root, bg="#d3d3d3")
+frame_right.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+# Creating a label for displaying the detected image
+label_img = tk.Label(frame_right, bg="#d3d3d3", text="PROCESSED IMAGE", font=("Arial", 16))
+label_img.pack(expand=True)
 
 # Run the application
 root.mainloop()
