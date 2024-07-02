@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #fff; /* white background */
+  height: 100vh; /* set body height to full screen */
+  margin: 0; /* remove margin */
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 90%; /* increase width */
+  height: 80vh; /* set container height to 80% of screen height */
+  margin: 20px auto; /* decrease margin */
+  padding: 30px; /* increase padding */
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background-color: #ADD8E6; /* light blue background */
+}
+
+.left-column {
+  width: 30%; /* increase width */
+  padding: 20px; /* increase padding */
+  border-right: 1px solid #ddd;
+  text-align: center; /* center align components */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* center align vertically */
+  height: 100%; /* set left column height to full height */
+}
+
+.right-column {
+  width: 70%; /* increase width */
+  padding: 30px; /* increase padding */
+  text-align: center; /* center align components */
+  height: 100%; /* set right column height to full height */
+}
+
+.image-frame {
+  width: 100%;
+  height: 150px; /* increase height of preview image frame */
+  border: 1px solid #ccc; /* grey border */
+  border-radius: 10px;
+  margin-bottom: 10px; /* increase margin bottom */
+  padding: 10px; /* increase padding */
+  display: flex;
+  justify-content: center; /* center align image */
+  align-items: center; /* center align image */
+  border: 1px solid #808080; /* grey border */
+  background-color: #fff; /* white background */
+}
+
+.right-column .image-frame {
+  height: 90%; /* keep the height of processed image frame as it is */
+}
+
+.buttons {
+  display: flex;
+  justify-content: center; /* center align buttons */
+  margin-bottom: 10px; /* increase margin bottom */
+}
+
+.button {
+  padding: 10px 20px; /* increase padding */
+  border: none;
+  border-radius: 5px;
+  font-size: 16px; /* increase font size */
+  margin: 10px;
+  cursor: pointer;
+}
+
+.detect {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.exit {
+  background-color: #FF9800;
+  color: #fff;
+}
+
+.detected-info {
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc; /* grey border */
+  border-radius: 10px;
+  text-align: center; /* center align text */
+  font-size: 14px; /* increase font size */
+  margin-bottom: 10px; /* increase margin bottom */
+}
+
+.detected-info p {
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="left-column">
+    <div class="image-frame">
+      <!-- preview image will be displayed here -->
+    </div>
+    <div class="buttons">
+      <button class="button detect">DETECT</button>
+      <button class="button exit">EXIT</button>
+    </div>
+    <div class="detected-info">
+      <p>1st person: sleeping, 50</p>
+    </div>
+  </div>
+  <div class="right-column">
+    <div class="image-frame">
+      <!-- processed image will be displayed here -->
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
