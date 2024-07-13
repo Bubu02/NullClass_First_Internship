@@ -1,8 +1,5 @@
 {
     "animal_model_path": "Machine Learning/Animal Identification/Saved Model/Animal_Detection_Model_v4.0.h5",
     "emotion_model_path": "Machine Learning/Animal Emotion Detection/Saved Model/facial_expression_model_v2.0.h5",
-    "animal_labels_path": "GUI/animal_name.csv",
-    "yolo_config_path" : "GUI/yolo/yolov3.cfg",
-    "yolo_weights_path" : "GUI/yolo/yolov3.weights",
-    "yolo_labels_path" : "GUI/yolo/coco.names"
+    "animal_labels_path": "GUI/animal_name.csv"
 }

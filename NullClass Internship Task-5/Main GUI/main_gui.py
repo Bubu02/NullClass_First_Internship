@@ -4,23 +4,25 @@ from tensorflow.keras.models import load_model
 from PIL import Image, ImageTk
 import numpy as np
 import cv2
-import torch
+import threading
+import logging
 from keras.losses import MeanAbsoluteError
 
-# Load the trained models
+logging.basicConfig(level=logging.INFO)
+
 custom_objects = {
     'mae': MeanAbsoluteError()
 }
 
-sleep_model = load_model('Machine Learning/Sleep Detection/Saved Models/Car_Drowsiness_Detection_Model_v2.0.h5')
-age_model = load_model('Machine Learning/Age Detector/Saved Models/Age_Detection_Model_v1.1.h5', custom_objects=custom_objects)
+try:
+    sleep_model = load_model('Machine Learning/Sleep Detection/Saved Models/Car_Drowsiness_Detection_Model_v2.0.h5')
+    age_model = load_model('Machine Learning/Age Detector/Saved Models/Age_Detection_Model_v1.1.h5', custom_objects=custom_objects)
+    logging.info("Models loaded successfully.")
+except Exception as e:
+    logging.error(f"Error loading models: {e}")
 
-# Load YOLOv5 model with custom weights
-yolo_model_path = 'Main GUI/yolov5s.pt'  # Update this path to your .pt file
-model = torch.hub.load('ultralytics/yolov5', 'custom', path=yolo_model_path, force_reload=True)
-
-# Load Haar Cascade for face detection
-haarcascade_path = 'Main GUI/haarcascade_frontalface_default.xml'  # Ensure this file is downloaded and available
+# Haar Cascade for face detection
+haarcascade_path = 'Main GUI/haarcascade_frontalface_default.xml'
 face_cascade = cv2.CascadeClassifier(haarcascade_path)
 
 def preprocess_image(image, target_size=(224, 224), grayscale=False):
@@ -31,12 +33,6 @@ def preprocess_image(image, target_size=(224, 224), grayscale=False):
     img = img.astype('float32') / 255.0
     img = np.expand_dims(img, axis=0)
     return img
-
-def detect_people(image):
-    results = model(image)
-    detections = results.xyxy[0].cpu().numpy()
-    people_detections = [d for d in detections if int(d[5]) == 0]
-    return people_detections
 
 def classify_sleep(person_crop):
     processed_crop = preprocess_image(person_crop, target_size=(224, 224), grayscale=False)
@@ -70,6 +66,9 @@ def detect_age_and_sleep():
     file_path = filedialog.askopenfilename()
     if not file_path:
         return
+    threading.Thread(target=process_and_display, args=(file_path,)).start()
+
+def process_and_display(file_path):
     frame = cv2.imread(file_path)
     results = process_frame(frame)
     display_results(frame, results)
@@ -100,29 +99,23 @@ def display_results(frame, results):
 
         message += f"Person-{idx + 1}, Status: {result['status']}, Age: {result['age']}\n"
 
-    # Resize the frame to fit in the tkinter window
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img_pil = Image.fromarray(frame_rgb).resize((700, 500))  # Adjusted to fit in the GUI
+    img_pil = Image.fromarray(frame_rgb).resize((700, 500))
     img_tk = ImageTk.PhotoImage(img_pil)
 
-    # Update the tkinter image label
     label_img.config(image=img_tk)
     label_img.image = img_tk
 
-    # Update the status message
     label_status.config(text=message)
 
-# Creating the main window
 root = tk.Tk()
 root.title("Age and Sleep Detection in Cars")
 root.configure(bg="#b0e0e6")
-root.state('zoomed')  # Make the window fullscreen
+root.state('zoomed')
 
-# Left section frame
 frame_left = tk.Frame(root, width=300, bg="#b0e0e6")
 frame_left.pack(side=tk.LEFT, fill=tk.Y, padx=10, pady=10)
 
-# Frame for original image preview
 frame_original = tk.Frame(frame_left, width=300, height=300, bg="#d3d3d3")
 frame_original.pack(pady=10)
 
@@ -130,11 +123,9 @@ frame_original.pack(pady=10)
 label_original_img = tk.Label(frame_original, bg="#d3d3d3", text="PREVIEW IMAGE", font=("Arial", 16))
 label_original_img.pack(expand=True)
 
-# Frame for buttons and status
 frame_buttons = tk.Frame(frame_left, width=300, bg="white")
 frame_buttons.pack(pady=10, fill=tk.X)
 
-# Creating a button for uploading and detecting age and sleep
 button_upload = tk.Button(frame_buttons, text="DETECT", command=detect_age_and_sleep, bg="#90ee90", width=15, height=2)
 button_upload.grid(row=0, column=0, padx=5, pady=5)
 
@@ -142,17 +133,13 @@ button_upload.grid(row=0, column=0, padx=5, pady=5)
 button_exit = tk.Button(frame_buttons, text="EXIT", command=root.quit, bg="#ff6961", width=15, height=2)
 button_exit.grid(row=0, column=1, padx=5, pady=5)
 
-# Creating a label for displaying the status
 label_status = tk.Label(frame_buttons, text="", font=("Arial", 12), bg="white", anchor='nw', justify='left')
 label_status.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
 
-# Right section frame for detected image (covering the rest of the screen)
 frame_right = tk.Frame(root, bg="#d3d3d3")
 frame_right.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-# Creating a label for displaying the detected image
 label_img = tk.Label(frame_right, bg="#d3d3d3", text="PROCESSED IMAGE", font=("Arial", 16))
 label_img.pack(expand=True)
 
-# Run the application
 root.mainloop()
